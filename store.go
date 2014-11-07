@@ -16,8 +16,10 @@ import (
 
 var StoreFileError error = errors.New("Store file error")
 
-var filesDir = "store"
-var dbName = "db"
+const (
+	filesDir = "raw"
+	dbName   = "db"
+)
 
 type Store interface {
 	StoreFile(reader io.Reader) (string, error)
@@ -70,12 +72,12 @@ func (s *fileStore) loadDb() {
 		return
 	}
 	if err != nil {
-		log.Fatal("Can't open store database: %v", err)
+		logger.Fatal("Can't open store database: %v", err)
 	}
 	defer f.Close()
 	encoder := json.NewDecoder(f)
 	if err := encoder.Decode(&s.items); err != nil {
-		log.Fatal("Can't open store database")
+		logger.Fatal("Can't open store database")
 	}
 }
 
@@ -84,12 +86,12 @@ func (s *fileStore) flushDb() {
 	defer s.RUnlock()
 	f, err := os.Create(path.Join(s.path, dbName))
 	if err != nil {
-		log.Fatal("Can't open store database")
+		logger.Fatal("Can't open store database")
 	}
 	defer f.Close()
 	enc := json.NewEncoder(f)
 	if err := enc.Encode(s.items); err != nil {
-		log.Fatal("Can't save store database")
+		logger.Fatal("Can't save store database")
 	}
 }
 
@@ -97,7 +99,7 @@ func (s *fileStore) init() error {
 	storePath := s.GetPath()
 	if _, err := os.Stat(storePath); os.IsNotExist(err) {
 		if err := os.MkdirAll(storePath, 0755); err != nil {
-			log.Fatal("Can't create store directory")
+			logger.Fatal("Can't create store directory")
 		}
 	}
 	s.loadDb()

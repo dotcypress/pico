@@ -9,24 +9,14 @@ import (
 
 var Version string = "0.0.0"
 var Release bool = false
-var log = logging.MustGetLogger("PICOCDN")
 
-var store Store
-
-func openStore(path string) error {
-	s, err := NewStore(path)
-	if err != nil {
-		return err
-	}
-	store = s
-	return nil
-}
+var logger = logging.MustGetLogger("PICOCDN")
 
 func main() {
 	logBackend := logging.NewLogBackend(os.Stderr, "", 0)
 	syslogBackend, err := logging.NewSyslogBackend("")
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	logging.SetBackend(logBackend, syslogBackend)
 	logging.SetFormatter(logging.MustStringFormatter("%{color}PICO %{time:15:04:05.00} %{level:-9.9s} %{color:reset} %{message}"))
@@ -63,7 +53,6 @@ func main() {
 					Usage:  "store path",
 					EnvVar: "PICO_STORE",
 				},
-
 				cli.StringFlag{
 					Name:   "uploadKey",
 					Value:  "secret",
@@ -72,12 +61,12 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) {
-				err := openStore(c.String("store"))
+				store, err := NewStore(c.String("store"))
 				if err != nil {
-					log.Critical("Can't start server: %v", err)
+					logger.Critical("Can't start server: %v", err)
 					return
 				}
-				Serve(c.GlobalString("network"), c.String("uploadKey"), true)
+				StartAsMaster(c.GlobalString("network"), c.String("uploadKey"), store)
 			},
 		},
 	}
