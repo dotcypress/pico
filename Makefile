@@ -9,7 +9,7 @@ DISTDIR := dist/$(GOOS)-$(GOARCH)
 
 .PHONY: clean default deps fmt release start test
 
-default: deps test
+default: deps
 	go build $(GOFLAGS)
 
 start:
@@ -31,15 +31,8 @@ deps:
 	go get -d
 
 dist/$(ARCHIVE): $(DISTDIR)/pico-cdn
+	cp scripts/* $(DISTDIR)
 	tar -C $(DISTDIR) -czvf $@ .
 
 $(DISTDIR)/pico-cdn: deps
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go build $(GOFLAGS) -o $@
-
-fmt:
-	go fmt ./...
-
-release: REMOTE     ?= $(error "can't upload, REMOTE not set")
-release: REMTOE_DIR ?= $(error "can't upload, REMOTE_DIR not set")
-release: dist/$(ARCHIVE)
-	scp $< $(REMOTE):$(REMOTE_DIR)
