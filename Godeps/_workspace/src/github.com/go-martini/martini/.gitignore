@@ -21,9 +21,6 @@ _testmain.go
 
 *.exe
 *.test
-*.prof
 
-dist
-pico-cdn
-
-
+/.godeps
+/.envrc
