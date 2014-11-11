@@ -14,7 +14,7 @@ import (
 	"github.com/nu7hatch/gouuid"
 )
 
-var StoreFileError error = errors.New("Store file error")
+var FileNotFoundError error = errors.New("File not found")
 
 const (
 	filesDir = "raw"
@@ -23,7 +23,7 @@ const (
 
 type Store interface {
 	StoreFile(reader io.Reader) (string, error)
-	GetPath() string
+	GetFilePath(id string) (string, error)
 }
 
 type fileDescriptor struct {
@@ -45,7 +45,7 @@ func (s *fileStore) String() string {
 
 func (s *fileStore) StoreFile(reader io.Reader) (string, error) {
 	key := <-s.keys
-	filePath := path.Join(s.GetPath(), key)
+	filePath := path.Join(s.path, filesDir, key)
 	file, err := os.Create(filePath)
 	if err != nil {
 		return "", err
@@ -62,8 +62,13 @@ func (s *fileStore) StoreFile(reader io.Reader) (string, error) {
 	return key, nil
 }
 
-func (s *fileStore) GetPath() string {
-	return path.Join(s.path, filesDir)
+func (s *fileStore) GetFilePath(id string) (string, error) {
+	s.RLock()
+	defer s.RUnlock()
+	if descriptor, ok := s.items[id]; ok && descriptor.Size > 0 {
+		return path.Join(s.path, filesDir, id), nil
+	}
+	return "", FileNotFoundError
 }
 
 func (s *fileStore) loadDb() {
@@ -96,7 +101,7 @@ func (s *fileStore) flushDb() {
 }
 
 func (s *fileStore) init() error {
-	storePath := s.GetPath()
+	storePath := path.Join(s.path, filesDir)
 	if _, err := os.Stat(storePath); os.IsNotExist(err) {
 		if err := os.MkdirAll(storePath, 0755); err != nil {
 			logger.Fatal("Can't create store directory")

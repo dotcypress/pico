@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"path"
 
 	"github.com/go-martini/martini"
 )
@@ -39,7 +38,11 @@ func StartAsMaster(network string, apiKey string, store Store) {
 }
 
 func downloadRaw(w http.ResponseWriter, r *http.Request, params martini.Params, store Store) {
-	http.ServeFile(w, r, path.Join(store.GetPath(), params["id"]))
+	if filePath, error := store.GetFilePath(params["id"]); error == nil {
+		http.ServeFile(w, r, filePath)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+	}
 }
 
 func uploadRaw(w http.ResponseWriter, r *http.Request, store Store, config *config) {

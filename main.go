@@ -37,8 +37,8 @@ func main() {
 		cli.StringFlag{
 			Name:   "network",
 			Value:  ":8080",
-			Usage:  "listening interface",
-			EnvVar: "PICO_INTERFACE",
+			Usage:  "listening interface & port",
+			EnvVar: "PICO_CDN_INTERFACE",
 		},
 	}
 	app.Commands = []cli.Command{
@@ -51,7 +51,7 @@ func main() {
 					Name:   "store",
 					Value:  "/data/pico-cdn",
 					Usage:  "store path",
-					EnvVar: "PICO_STORE",
+					EnvVar: "PICO_CDN_STORE",
 				},
 				cli.StringFlag{
 					Name:   "uploadKey",

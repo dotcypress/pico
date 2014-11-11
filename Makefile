@@ -31,7 +31,6 @@ deps:
 	go get -d
 
 dist/$(ARCHIVE): $(DISTDIR)/pico-cdn
-	cp scripts/* $(DISTDIR)
 	tar -C $(DISTDIR) -czvf $@ .
 
 $(DISTDIR)/pico-cdn: deps
