@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-martini/martini"
+	"github.com/martini-contrib/cors"
 )
 
 type config struct {
@@ -30,6 +31,14 @@ func StartAsMaster(network string, apiKey string, store Store) {
 	m.Map(store)
 	m.Map(config)
 
+	m.Use(cors.Allow(&cors.Options{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"POST"},
+		AllowHeaders:     []string{"Origin"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
+
 	m.Post("/upload", uploadRaw)
 	m.Get("/:id", downloadRaw)
 
@@ -46,17 +55,21 @@ func downloadRaw(w http.ResponseWriter, r *http.Request, params martini.Params, 
 }
 
 func uploadRaw(w http.ResponseWriter, r *http.Request, store Store, config *config) {
-	if r.Header.Get("X-API-KEY") != config.authKey {
-		w.WriteHeader(http.StatusUnauthorized)
+	r.ParseMultipartForm(64 << 20)
+
+	apikey := r.FormValue("apiKey")
+	if apikey != config.authKey {
+		http.Error(w, "Api key is required", http.StatusUnauthorized)
 		return
 	}
-	r.ParseMultipartForm(64 << 20)
+
 	file, _, err := r.FormFile("file")
 	if err != nil {
 		http.Error(w, "File is required", http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
+
 	id, err := store.StoreFile(file)
 	if err != nil {
 		logger.Error("Can't store file: %v", err)
