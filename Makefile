@@ -1,4 +1,4 @@
-VERSION := $(shell git describe --tags | sed "s/-.*//g")
+VERSION := 0.0.2
 
 GOFLAGS := -ldflags "-X main.Version $(VERSION) -X main.Release true"
 GOOS    := $(shell go env GOOS)
